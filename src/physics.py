@@ -19,19 +19,19 @@ def capThrowX(x, speedCapThrowLimit, time):
 def capThrowY(y, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
     if time <= gravityCapThrowFrame:
         frames = np.linspace(0,time,time+1)
-        yPos = y + speedCapThrow*(frames+1) + gravityCapThrow*frames*(frames+1)/2
+        yPos = y + speedCapThrow*(frames) + gravityCapThrow*frames*(frames+1)/2
 
     if tVTimeCapThrow >= time > gravityCapThrowFrame:
         frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
         frames2 = np.linspace(1,time-gravityCapThrowFrame,time-gravityCapThrowFrame)
-        yPos1 = y + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
+        yPos1 = y + speedCapThrow*(frames1) + gravityCapThrow*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.GRAVITY*(frames2)*(frames2+1)/2
         yPos = np.concatenate((yPos1, yPos2))
     if time > tVTimeCapThrow:
         frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
         frames2 = np.linspace(1,tVTimeCapThrow-gravityCapThrowFrame,tVTimeCapThrow-gravityCapThrowFrame)
         frames3 = np.linspace(1,time-tVTimeCapThrow,time-tVTimeCapThrow)
-        yPos1 = y + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
+        yPos1 = y + speedCapThrow*(frames1) + gravityCapThrow*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.GRAVITY*(frames2)*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
         yPos = np.concatenate((yPos1,yPos2))
@@ -46,18 +46,17 @@ def diveX(x, speedDiveH, time):
 def diveY(y, speedDiveV, gravityDive, time):
     if time <= tVTimeDive:
         frames = np.linspace(0,time,time+1)
-        yPos = y + speedDiveV*(frames+1) + gravityDive*frames*(frames+1)/2
+        yPos = y + speedDiveV*(frames) + gravityDive*frames*(frames+1)/2
 
     if time > tVTimeDive:
         frames1 = np.linspace(0,tVTimeDive,tVTimeDive+1)
         frames2 = np.linspace(1,time-tVTimeDive,time-tVTimeDive)
-        yPos1 = y + speedDiveV*(frames1+1) + gravityDive*frames1*(frames1+1)/2
+        yPos1 = y + speedDiveV*(frames1) + gravityDive*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
 
 def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
-    frames = np.linspace(0,time,time+1)
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2)))
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]]))
     if horizontal == 0.9999999999999999:
@@ -65,34 +64,61 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     xStick = np.cos(stickAngle)
     yStick = np.sin(stickAngle)
     stickDir = np.array([xStick,yStick])
-    print(stickDir)
+    
     vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)))
 
-    if vectorAngle == 0:
-        xPos = pos[0] + speedCapJumpH*frames*np.cos(vAngle)
-        zPos = pos[2] + speedCapJumpH*frames*np.sin(vAngle)
+    vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))
 
-    if np.pi/2 >= vectorAngle > 0:
-        xPos = (pos[0] + speedCapJumpH*(frames+1))
-        zPos = (pos[2] + jumpAccelSide*(frames+1) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
-    
+
+    if vectorAngle == 0:
+        frames = np.linspace(0,time,time+1)
+        xPos = pos[0] + speedCapJumpH*frames
+        zPos = pos[2] + 0*frames
+
         newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
         newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
 
         xPos = newXPos
         zPos = newZPos
+
+    if np.pi/2 >= vectorAngle > 0:
+        if time <= vectorTimeCapJump:
+            frames = np.linspace(0,time,time+1)
+            xPos = (pos[0] + speedCapJumpH*(frames+1))
+            zPos = (pos[2] + jumpAccelSide*(frames+1) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
+    
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+
+            xPos = newXPos
+            zPos = newZPos
+        if time > vectorTimeCapJump:
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,vectorTimeCapJump,vectorTimeCapJump+1)
+            frames2 = np.linspace(1,time-vectorTimeCapJump,time-vectorTimeCapJump)
+            xPos = (pos[0] + speedCapJumpH*(frames))
+            zPos1 = (pos[2] + jumpAccelSide*(frames1) + jumpAccelSide*frames1*(frames1+1)/2*np.sin(vectorAngle))
+            zPos2 = zPos1[-1] + speedCapJumpH*(frames2)
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+
+            xPos = newXPos
+            zPos = newZPos
+
     return np.array([xPos,zPos])
 
         
 def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     if time <= tVTimeCapJump:
         frames = np.linspace(0,time,time+1)
-        yPos = pos[1] + speedCapJumpV*(frames+1) + gravityCapJump*frames*(frames+1)/2
+        yPos = pos[1] + speedCapJumpV*(frames) + gravityCapJump*frames*(frames+1)/2
 
     if time > tVTimeCapJump:
         frames1 = np.linspace(0,tVTimeCapJump,tVTimeCapJump+1)
         frames2 = np.linspace(1,time-tVTimeCapJump,time-tVTimeCapJump)
-        yPos1 = pos[1] + speedCapJumpV*(frames1+1) + gravityCapJump*frames1*(frames1+1)/2
+        yPos1 = pos[1] + speedCapJumpV*(frames1) + gravityCapJump*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
