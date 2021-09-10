@@ -6,6 +6,7 @@ from mpl_toolkits import mplot3d
 
 ax = plt.axes(projection='3d')
 
+# calculate times to reach terminal velocity given the type of movement
 tVTimeDive = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_DIVE)
 tVTimeCapJump = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_CAP_JUMP)
 tVTimeCapThrow = m.floor((const.TERMINAL_V-(const.SPEED_CAP_THROW+const.GRAVITY_CAP_THROW*const.GRAVITY_CAP_THROW_FRAME))/const.GRAVITY+const.GRAVITY_CAP_THROW_FRAME)
@@ -57,17 +58,17 @@ def diveY(y, speedDiveV, gravityDive, time):
     return np.array(yPos)
 
 def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
-    vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2)))
-    horizontal = np.linalg.norm(np.array([v0[0],v0[2]]))
+    vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
+    horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
     if horizontal == 0.9999999999999999:
-        horizontal = 1
+        horizontal = 1  #float error correction, because otherwise arccos will break :)
     xStick = np.cos(stickAngle)
     yStick = np.sin(stickAngle)
-    stickDir = np.array([xStick,yStick])
+    stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
     
-    vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)))
+    vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir))) # calculates the angle between the stick direction and velocity
 
-    vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))
+    vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))) # calculates the time to reach maximum speed given your vector angle
 
 
     if vectorAngle == 0:
@@ -124,8 +125,8 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     return np.array(yPos)
 
 pos = np.array([0,0,0])
-v0 = np.array([1,0,0])
-stickAngle = -np.pi/2
+v0 = np.array([1,0,1])
+stickAngle = 3*np.pi/4
 time = 80
 x = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
 z = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
@@ -134,5 +135,7 @@ ax.plot3D(x,z,y)
 ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
+ax.set_xlim(0,1500)
+ax.set_ylim(0,1500)
 ax.set_title('Cap Bounce with Vector')
 plt.show()
