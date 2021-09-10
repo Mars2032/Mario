@@ -65,6 +65,7 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     xStick = np.cos(stickAngle)
     yStick = np.sin(stickAngle)
     stickDir = np.array([xStick,yStick])
+    print(stickDir)
     vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)))
 
     if vectorAngle == 0:
@@ -80,7 +81,6 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
 
         xPos = newXPos
         zPos = newZPos
-        print(zPos)
     return np.array([xPos,zPos])
 
         
@@ -99,7 +99,7 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
 
 pos = np.array([0,0,0])
 v0 = np.array([1,0,0])
-stickAngle = np.pi/2
+stickAngle = -np.pi/2
 time = 80
 x = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
 z = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
