@@ -2,22 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math as m
 
-gravity = -1.5
-gravityJumpContinuous = -1
-gravityCapJump = -1
-gravityCapThrow = -0.3
-speedCapThrow = 5.7
-gravityCapThrowFrame = 24
-speedCapJumpH = 24
-speedCapJumpV = 24
-speedDiveH = 20
-speedDiveV = 26
-gravityDive = -2
-speedCapThrowLimit = 7
-terminalV = -35
-jumpAccelForwards = 0.5
-jumpAccelBackwards = -1
-jumpAccelSide = 0.3
 
 tVTimeDive = m.floor((terminalV-speedDiveV)/gravityDive)
 tVTimeCapJump = m.floor((terminalV-speedCapJumpV)/gravityCapJump)
