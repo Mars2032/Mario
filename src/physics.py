@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math as m
 import player_const as const
+from mpl_toolkits import mplot3d
 
+ax = plt.axes(projection='3d')
 
 tVTimeDive = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_DIVE)
 tVTimeCapJump = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_CAP_JUMP)
@@ -57,37 +59,54 @@ def diveY(y, speedDiveV, gravityDive, time):
 def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
     frames = np.linspace(0,time,time+1)
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2)))
-    horizontal = np.array([v0[0],v0[2]])
+    horizontal = np.linalg.norm(np.array([v0[0],v0[2]]))
+    if horizontal == 0.9999999999999999:
+        horizontal = 1
     xStick = np.cos(stickAngle)
     yStick = np.sin(stickAngle)
     stickDir = np.array([xStick,yStick])
-    vectorAngle = np.arccos(np.dot(horizontal,stickDir)/(np.linalg.norm(horizontal)*np.linalg.norm(stickDir)))
-    print(vectorAngle)
-
-    xSpeed = speedCapJumpH
-    zSpeed = 0
+    vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)))
 
     if vectorAngle == 0:
-        xPos = xSpeed*frames*np.cos(vAngle)
-        zPos = xSpeed*frames*np.sin(vAngle)
-        print(xPos)
+        xPos = pos[0] + speedCapJumpH*frames*np.cos(vAngle)
+        zPos = pos[2] + speedCapJumpH*frames*np.sin(vAngle)
+
+    if np.pi/2 >= vectorAngle > 0:
+        xPos = (pos[0] + speedCapJumpH*(frames+1))
+        zPos = (pos[2] + jumpAccelSide*(frames+1) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
+    
+        newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+        newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+
+        xPos = newXPos
+        zPos = newZPos
         print(zPos)
+    return np.array([xPos,zPos])
+
         
-def capJumpY(y, speedCapJumpV, gravityCapJump, time):
+def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     if time <= tVTimeCapJump:
         frames = np.linspace(0,time,time+1)
-        yPos = y + speedCapJumpV*(frames+1) + gravityCapJump*frames*(frames+1)/2
+        yPos = pos[1] + speedCapJumpV*(frames+1) + gravityCapJump*frames*(frames+1)/2
 
     if time > tVTimeCapJump:
         frames1 = np.linspace(0,tVTimeCapJump,tVTimeCapJump+1)
         frames2 = np.linspace(1,time-tVTimeCapJump,time-tVTimeCapJump)
-        yPos1 = y + speedCapJumpV*(frames1+1) + gravityCapJump*frames1*(frames1+1)/2
+        yPos1 = pos[1] + speedCapJumpV*(frames1+1) + gravityCapJump*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
 
 pos = np.array([0,0,0])
-v0 = np.array([1/2,0,np.sqrt(3)/2])
-stickAngle = np.pi/3
-time = 10
-print(capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time))
+v0 = np.array([1,0,0])
+stickAngle = np.pi/2
+time = 80
+x = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
+z = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
+y = capJumpY(pos, const.SPEED_CAP_JUMP_V, const.GRAVITY_CAP_JUMP, time)
+ax.plot3D(x,z,y)
+ax.set_xlabel('x position')
+ax.set_ylabel('z position')
+ax.set_zlabel('y position')
+ax.set_title('Cap Bounce with Vector')
+plt.show()
