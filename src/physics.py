@@ -1,27 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math as m
+import player_const as const
 
-gravity = -1.5
-gravityJumpContinuous = -1
-gravityCapJump = -1
-gravityCapThrow = -0.3
-speedCapThrow = 5.7
-gravityCapThrowFrame = 24
-speedCapJumpH = 24
-speedCapJumpV = 24
-speedDiveH = 20
-speedDiveV = 26
-gravityDive = -2
-speedCapThrowLimit = 7
-terminalV = -35
-jumpAccelForwards = 0.5
-jumpAccelBackwards = -1
-jumpAccelSide = 0.3
 
-tVTimeDive = m.floor((terminalV-speedDiveV)/gravityDive)
-tVTimeCapJump = m.floor((terminalV-speedCapJumpV)/gravityCapJump)
-tVTimeCapThrow = m.floor((terminalV-(speedCapThrow+gravityCapThrow*gravityCapThrowFrame))/gravity+gravityCapThrowFrame)
+tVTimeDive = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_DIVE)
+tVTimeCapJump = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_CAP_JUMP)
+tVTimeCapThrow = m.floor((const.TERMINAL_V-(const.SPEED_CAP_THROW+const.GRAVITY_CAP_THROW*const.GRAVITY_CAP_THROW_FRAME))/const.GRAVITY+const.GRAVITY_CAP_THROW_FRAME)
 
 
 def capThrowX(x, speedCapThrowLimit, time):
@@ -131,4 +116,4 @@ pos = np.array([0,0,0])
 v0 = np.array([1,0,0])
 stickAngle = np.pi/2
 time = 10
-print(capJumpX(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time))
+print(capJumpX(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time))
