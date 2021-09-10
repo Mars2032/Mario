@@ -58,6 +58,7 @@ def diveY(y, speedDiveV, gravityDive, time):
     return np.array(yPos)
 
 def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
+    vxz = np.array([v0[0],v0[2]])
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
     if horizontal == 0.9999999999999999:
@@ -67,6 +68,12 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
     
     vectorAngle = np.arccos(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir))) # calculates the angle between the stick direction and velocity
+
+    # determine the direction of the vector
+    if np.cross(stickDir,vxz) > 0:
+        vectorDir = 1
+    elif np.cross(stickDir,vxz) < 0:
+        vectorDir = -1
 
     vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))) # calculates the time to reach maximum speed given your vector angle
 
@@ -82,7 +89,7 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
         xPos = newXPos
         zPos = newZPos
 
-    if np.pi/2 >= vectorAngle > 0:
+    if (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
         if time <= vectorTimeCapJump:
             frames = np.linspace(0,time,time+1)
             xPos = (pos[0] + speedCapJumpH*(frames+1))
@@ -100,6 +107,32 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
             xPos = (pos[0] + speedCapJumpH*(frames))
             zPos1 = (pos[2] + jumpAccelSide*(frames1) + jumpAccelSide*frames1*(frames1+1)/2*np.sin(vectorAngle))
             zPos2 = zPos1[-1] + speedCapJumpH*(frames2)
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+
+            xPos = newXPos
+            zPos = newZPos
+    
+    if (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
+        if time <= vectorTimeCapJump:
+            frames = np.linspace(0,time,time+1)
+            xPos = (pos[0] + speedCapJumpH*(frames+1))
+            zPos = (pos[2] + jumpAccelSide*(frames+1) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
+    
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+
+            xPos = newXPos
+            zPos = newZPos
+        if time > vectorTimeCapJump:
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,vectorTimeCapJump,vectorTimeCapJump+1)
+            frames2 = np.linspace(1,time-vectorTimeCapJump,time-vectorTimeCapJump)
+            xPos = (pos[0] + speedCapJumpH*(frames))
+            zPos1 = (pos[2] - jumpAccelSide*(frames1) - jumpAccelSide*frames1*(frames1+1)/2*np.sin(vectorAngle))
+            zPos2 = zPos1[-1] - speedCapJumpH*(frames2)
             zPos = np.concatenate((zPos1,zPos2))
 
             newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
@@ -125,8 +158,8 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     return np.array(yPos)
 
 pos = np.array([0,0,0])
-v0 = np.array([1,0,1])
-stickAngle = 3*np.pi/4
+v0 = np.array([1,0,0])
+stickAngle = -np.pi/2
 time = 80
 x = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
 z = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
@@ -135,7 +168,5 @@ ax.plot3D(x,z,y)
 ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
-ax.set_xlim(0,1500)
-ax.set_ylim(0,1500)
 ax.set_title('Cap Bounce with Vector')
 plt.show()
