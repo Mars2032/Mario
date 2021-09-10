@@ -15,6 +15,9 @@ speedDiveV = 26
 gravityDive = -2
 speedCapThrowLimit = 7
 terminalV = -35
+jumpAccelForwards = 0.5
+jumpAccelBackwards = -1
+jumpAccelSide = 0.3
 
 tVTimeDive = m.floor((terminalV-speedDiveV)/gravityDive)
 tVTimeCapJump = m.floor((terminalV-speedCapJumpV)/gravityCapJump)
@@ -33,6 +36,7 @@ def capThrowY(y, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
         for n in range(time):
             pos = pos + speedCapThrow + gravityCapThrow*n
             yPos.append(str(pos))
+
     if tVTimeCapThrow >= time > gravityCapThrowFrame:
         for n in range(gravityCapThrowFrame):
             pos = pos + speedCapThrow + gravityCapThrow*n
@@ -40,6 +44,7 @@ def capThrowY(y, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
         for n in range(1,time-gravityCapThrowFrame+1):
             pos = pos + speedCapThrow+gravityCapThrow*gravityCapThrowFrame + gravity*n
             yPos.append(str(pos))
+
     if time > tVTimeCapThrow:
         for n in range(gravityCapThrowFrame):
             pos = pos + speedCapThrow + gravityCapThrow*n
@@ -68,6 +73,7 @@ def diveY(y, speedDiveV, gravityDive, time):
         for n in range(time):
             pos = pos + speedDiveV + gravityDive*n
             yPos.append(str(pos))
+
     if time > tVTimeDive:
         for n in range(tVTimeDive):
             pos = pos + speedDiveV + gravityDive*n
@@ -81,10 +87,24 @@ def diveY(y, speedDiveV, gravityDive, time):
     yPos = yPos.astype(float)
     return yPos
 
-def capJumpX(x, speedCapJumpH, time):
+def capJumpX(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
     frames = np.linspace(0,time,time+1)
-    xPos = x + speedCapJumpH*frames
+    xSpeed = speedCapJumpH*v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))
+    zSpeed = speedCapJumpH*v0[2]/(np.sqrt(v0[0]**2+v0[2]**2))
+    horizontal = np.array([xSpeed,zSpeed])
+    xStick = np.cos(stickAngle)
+    yStick = np.sin(stickAngle)
+    stickDir = np.array([xStick,yStick])
+
+    theta = np.arccos(np.dot(horizontal,stickDir)/(np.linalg.norm(horizontal)*np.linalg.norm(stickDir)))
+    print(theta)
+    if theta == 0:
+        xPos = pos[0] + xSpeed*frames
+    if np.pi/2 >= theta > 0:
+        xSpeed = jumpAccelSide*np.sin(theta)*frames
+        xPos = pos[0]+xSpeed
     return np.array(xPos)
+
 
 def capJumpY(y, speedCapJumpV, gravityCapJump, time):
     yPos = [str(y)]
@@ -93,6 +113,7 @@ def capJumpY(y, speedCapJumpV, gravityCapJump, time):
         for n in range(time):
             pos = pos + speedCapJumpV + gravityCapJump*n
             yPos.append(str(pos))
+
     if time > tVTimeCapJump:
         for n in range(tVTimeCapJump):
             pos = pos + speedCapJumpV + gravityCapJump*n
@@ -106,13 +127,8 @@ def capJumpY(y, speedCapJumpV, gravityCapJump, time):
     yPos = yPos.astype(float)
     return yPos
 
-diveFrame = 26
-diveTime = 23
-capJumpTime = 45
-plt.plot(capThrowX(0,speedCapThrowLimit,diveFrame),capThrowY(0,speedCapThrow,gravityCapThrow,gravityCapThrowFrame,diveFrame),'r-')
-plt.plot(diveX(capThrowX(0,speedCapThrowLimit,diveFrame)[-1],speedDiveH,diveTime),diveY(capThrowY(0,speedCapThrow,gravityCapThrow,gravityCapThrowFrame,diveFrame)[-1],speedDiveV,gravityDive,diveTime),'b-')
-plt.plot(capJumpX(diveX(capThrowX(0,speedCapThrowLimit,diveFrame)[-1],speedDiveH,diveTime)[-1],speedCapJumpH,capJumpTime),capJumpY(diveY(capThrowY(0,speedCapThrow,gravityCapThrow,gravityCapThrowFrame,diveFrame)[-1],speedDiveV,gravityDive,diveTime)[-1],speedCapJumpV,gravityCapJump,capJumpTime),'g-')
-plt.xlabel('x position')
-plt.ylabel('y position')
-plt.title('Cap Bounce')
-plt.show()
+pos = np.array([0,0,0])
+v0 = np.array([1,0,0])
+stickAngle = np.pi/2
+time = 10
+print(capJumpX(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time))
