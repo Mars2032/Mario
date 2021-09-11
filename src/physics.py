@@ -24,6 +24,7 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
     
     vectorAngle = np.arccos(round(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)),5)) # calculates the angle between the stick direction and velocity
 
+    
     # determine the direction of the vector
     if np.cross(stickDir,vxz) > 0:
         vectorDir = 1
@@ -31,9 +32,9 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
         vectorDir = -1
 
     if (vectorAngle != np.pi/2):
-        reverseFallTime = abs(m.floor((0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle))+(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle)))))
-        reverseFallBackwards = abs(m.floor(0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle)))
-        reverseFallForwards = abs(m.floor(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle))))
+        reverseFallTime = int(abs(m.floor((0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle))+(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle))))))
+        reverseFallBackwards = int(abs(m.floor(0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle))))
+        reverseFallForwards = int(abs(m.floor(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle)))))
     if time <= gravityCapThrowFrame:
         if vectorAngle == 0:
             frames = np.linspace(0,time,time+1)
@@ -95,7 +96,7 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
 
             xPos = newXPos
             zPos = newZPos
-    elif time > gravityCapThrowFrame:
+    elif (time > gravityCapThrowFrame) & (np.pi/2 >= vectorAngle >= 0):
         if vectorAngle == 0:
             frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames2 = time-gravityCapThrowFrame
@@ -155,16 +156,16 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
             zPos = np.concatenate((zPos,fallZ))
     elif (time > gravityCapThrowFrame) & (reverseFallTime < gravityCapThrowFrame):
         if vectorAngle == np.pi:
-            frames = np.linspace(0,time,time+1)
+            frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames1 = np.linspace(0,reverseFallBackwards,reverseFallBackwards+1)
             frames2 = np.linspace(1,reverseFallForwards,reverseFallForwards)
             frames3 = np.linspace(1,gravityCapThrowFrame-reverseFallTime,gravityCapThrowFrame-reverseFallTime)
             frames4 = time-gravityCapThrowFrame
-            xPos1 = speedCapThrowLimit*frames1 * jumpAccelBackwards*frames1*(frames1+1)/2
+            xPos1 = speedCapThrowLimit*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = 0*frames
-
+            
             xPos = np.concatenate((xPos1,xPos2,xPos3))
 
             newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
@@ -172,6 +173,7 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
 
             xPos = newXPos
             zPos = newZPos
+
             pos = np.array([xPos[-1],0,zPos[-1]])
             v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
 
@@ -181,12 +183,12 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
             xPos = np.concatenate((xPos,fallX))
             zPos = np.concatenate((zPos,fallZ))
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == -1):
-            frames = np.linspace(0,time,time+1)
+            frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames1 = np.linspace(0,reverseFallBackwards,reverseFallBackwards+1)
             frames2 = np.linspace(1,reverseFallForwards,reverseFallForwards)
             frames3 = np.linspace(1,gravityCapThrowFrame-reverseFallTime,gravityCapThrowFrame-reverseFallTime)
             frames4 = time-gravityCapThrowFrame
-            xPos1 = speedCapThrowLimit*frames1 * jumpAccelBackwards*frames1*(frames1+1)/2
+            xPos1 = speedCapThrowLimit*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
@@ -207,12 +209,12 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
             xPos = np.concatenate((xPos,fallX))
             zPos = np.concatenate((zPos,fallZ))
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == 1):
-            frames = np.linspace(0,time,time+1)
+            frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames1 = np.linspace(0,reverseFallBackwards,reverseFallBackwards+1)
             frames2 = np.linspace(1,reverseFallForwards,reverseFallForwards)
             frames3 = np.linspace(1,gravityCapThrowFrame-reverseFallTime,gravityCapThrowFrame-reverseFallTime)
             frames4 = time-gravityCapThrowFrame
-            xPos1 = speedCapThrowLimit*frames1 * jumpAccelBackwards*frames1*(frames1+1)/2
+            xPos1 = speedCapThrowLimit*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
@@ -252,12 +254,11 @@ def capThrowXZFall(pos, v0, speedCapThrowFall, stickAngle, jumpAccelForwards, ju
     elif np.cross(stickDir,vxz) < 0:
         vectorDir = -1
     if (vectorAngle != 0):
-        vectorTimeCapThrowFall = m.floor(speedCapThrowFall/(jumpAccelSide*np.sin(vectorAngle)))
+        vectorTimeCapThrowFall = int(abs(m.floor(speedCapThrowFall/(jumpAccelSide*np.sin(vectorAngle)))))
     if (vectorAngle != np.pi/2):
-        fallAccelTime = abs(m.floor((speedCapThrowFall-np.linalg.norm(vxz))/jumpAccelForwards*np.cos(vectorAngle)))
-        reverseTimeFall = abs(m.floor((0-np.linalg.norm(vxz))/(jumpAccelBackwards*np.cos(vectorAngle))+speedCapThrowFall/(jumpAccelForwards*np.cos(vectorAngle))))
-    
-    if time <= fallAccelTime:
+        fallAccelTime = int(abs(m.floor((speedCapThrowFall-np.linalg.norm(vxz))/jumpAccelForwards*np.cos(vectorAngle))))
+        reverseTimeFall = int(abs(m.floor((0-np.linalg.norm(vxz))/(jumpAccelBackwards*np.cos(vectorAngle))+speedCapThrowFall/(jumpAccelForwards*np.cos(vectorAngle)))))
+    if (time <= fallAccelTime) & (np.pi/2 >= vectorAngle >= 0):
         if (vectorAngle == 0):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelForwards*frames*(frames+1)/2
@@ -288,7 +289,7 @@ def capThrowXZFall(pos, v0, speedCapThrowFall, stickAngle, jumpAccelForwards, ju
 
             xPos = newXPos
             zPos = newZPos
-    elif time <= reverseTimeFall:
+    elif (time <= reverseTimeFall) & (np.pi >= vectorAngle > np.pi/2):
         if vectorAngle == np.pi:
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelBackwards*frames*(frames+1)/2
@@ -585,7 +586,6 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     if vectorAngle != 0:
         vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))) # calculates the time to reach maximum speed given your vector angle
 
-
     if vectorAngle == 0:
         frames = np.linspace(0,time,time+1)
         xPos = speedCapJumpH*frames
@@ -666,13 +666,13 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     return np.array(yPos)
 
 pos = np.array([0,0,0])
-v0 = np.array([np.sqrt(3)/2,0,1/2])
-stickAngle = np.pi/6
-stickAngleChange = np.pi/6
+v0 = np.array([1,0,0])
+stickAngle = np.pi
+stickAngleChange = np.pi
 throwTime=26
 diveTime = 23
 capJumpTime = 40
-capJumpStick = 2*np.pi/3
+capJumpStick = np.pi
 
 throwX = capThrowXZ(pos,v0,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,stickAngle,stickAngleChange,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,throwTime)[0]
 throwZ = capThrowXZ(pos,v0,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,stickAngle,stickAngleChange,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,throwTime)[1]
@@ -680,14 +680,15 @@ throwY = capThrowY(pos,const.SPEED_CAP_THROW_V,const.GRAVITY_CAP_THROW,const.GRA
 
 divePos = np.array([throwX[-1],throwY[-1],throwZ[-1]])
 
-diveX = diveXZ(divePos,stickAngle,const.SPEED_DIVE_H,diveTime)[0]
-diveZ = diveXZ(divePos,stickAngle,const.SPEED_DIVE_H,diveTime)[1]
+diveX = diveXZ(divePos,stickAngleChange,const.SPEED_DIVE_H,diveTime)[0]
+diveZ = diveXZ(divePos,stickAngleChange,const.SPEED_DIVE_H,diveTime)[1]
 yDive = diveY(divePos,const.SPEED_DIVE_V,const.GRAVITY_DIVE,diveTime)
 
 capJumpPos = np.array([diveX[-1],yDive[-1],diveZ[-1]])
+capJumpVel = np.array([diveX[-1]-diveX[-2],yDive[-1]-yDive[-2],diveZ[-1]-diveZ[-2]])
 
-xCapJump = capJumpXZ(capJumpPos,v0,const.SPEED_CAP_JUMP_H,capJumpStick,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capJumpTime)[0]
-zCapJump = capJumpXZ(capJumpPos,v0,const.SPEED_CAP_JUMP_H,capJumpStick,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capJumpTime)[1]
+xCapJump = capJumpXZ(capJumpPos,capJumpVel,const.SPEED_CAP_JUMP_H,capJumpStick,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capJumpTime)[0]
+zCapJump = capJumpXZ(capJumpPos,capJumpVel,const.SPEED_CAP_JUMP_H,capJumpStick,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capJumpTime)[1]
 yCapJump = capJumpY(capJumpPos,const.SPEED_CAP_JUMP_V,const.GRAVITY_CAP_JUMP,capJumpTime)
 
 ax.plot3D(throwX,throwZ,throwY,'r')
@@ -696,8 +697,8 @@ ax.plot3D(xCapJump,zCapJump,yCapJump,'g')
 ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
-ax.set_xlim(0,1200)
-ax.set_ylim(0,1200)
+ax.set_xlim(-1200,0)
+ax.set_ylim(-1200,0)
 ax.set_zlim(0,1200)
 ax.set_title('Cap Bounce with Vector')
 plt.show()
