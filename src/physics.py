@@ -650,8 +650,7 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
             zPos = newZPos
 
     return np.array([xPos,zPos])
-
-        
+      
 def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     if time <= tVTimeCapJump:
         frames = np.linspace(0,time,time+1)
@@ -664,6 +663,190 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
         yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
+
+def singleJumpXZ(pos, v0, stickAngle, time):
+    vxz = np.array([v0[0],v0[2]])
+    horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
+    
+    if horizontal == 0.9999999999999999:
+        horizontal = 1  #float error correction, because otherwise arccos will break :)
+    xStick = np.cos(stickAngle)
+    yStick = np.sin(stickAngle)
+    stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
+    if horizontal != 0:
+        vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the jump
+        vectorAngle = np.arccos(round(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)),5)) # calculates the angle between the stick direction and velocity
+    elif horizontal == 0:
+        vectorAngle = 0
+
+    if horizontal <= const.SPEED_AIR_LIMIT:
+        if vectorAngle != 0:
+            jumpVectorTime = int(abs(m.floor((const.SPEED_AIR_LIMIT)/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle)))))
+        jumpAccelTime = int(abs(m.floor((const.SPEED_AIR_LIMIT - horizontal)/(const.JUMP_ACCEL_FORWARDS*np.cos(vectorAngle)))))
+    elif const.SPEED_JUMP_LIMIT >= horizontal > const.SPEED_AIR_LIMIT:
+        if vectorAngle != 0:
+            jumpVectorTime = int(abs(m.floor(horizontal/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle)))))
+    elif horizontal > const.SPEED_JUMP_LIMIT:
+        horizontal = const.SPEED_JUMP_LIMIT
+        if vectorAngle != 0:
+            jumpVectorTime = int(abs(m.floor(horizontal/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle)))))
+    
+    # determine the direction of the vector
+    if np.cross(stickDir,vxz) > 0:
+        vectorDir = 1
+    elif np.cross(stickDir,vxz) < 0:
+        vectorDir = -1
+
+    if vectorAngle == 0:
+        if (horizontal < const.SPEED_AIR_LIMIT) & (time <= jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            xPos = horizontal*frames + const.JUMP_ACCEL_FORWARDS*frames*(frames+1)/2
+            zPos = 0*frames
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (horizontal < const.SPEED_AIR_LIMIT) & (time > jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpAccelTime,jumpAccelTime+1)
+            frames2 = np.linspace(1,time-jumpAccelTime,time-jumpAccelTime)
+            xPos1 = horizontal*frames1 + const.JUMP_ACCEL_FORWARDS*frames1*(frames1+1)/2
+            xPos2 = xPos1[-1] + const.SPEED_AIR_LIMIT*frames2
+            zPos = 0*frames
+
+            xPos = np.concatenate((xPos1,xPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif const.SPEED_AIR_LIMIT < horizontal <= const.SPEED_JUMP_LIMIT:
+            frames = np.linspace(0,time,time+1)
+            xPos = horizontal*frames
+            zPos = 0*frames
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+    elif (np.pi/2 >= vectorAngle > 0) & (vectorAngle == -1):
+        if (horizontal < const.SPEED_AIR_LIMIT) & (jumpVectorTime < time <= jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpVectorTime,jumpVectorTime+1)
+            frames2 = np.linspace(1,time-jumpVectorTime,time-jumpVectorTime)
+            xPos = horizontal*frames + const.JUMP_ACCEL_FORWARDS*frames*(frames+1)/2*np.cos(vectorAngle)
+            zPos1 = const.JUMP_ACCEL_SIDE*frames1*(frames1+1)/2*np.sin(vectorAngle)
+            zPos2 = zPos1[-1] + horizontal*frames2
+
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (horizontal < const.SPEED_AIR_LIMIT) & (jumpVectorTime >= time > jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpAccelTime,jumpAccelTime+1)
+            frames2 = np.linspace(1,time-jumpAccelTime,time-jumpAccelTime)
+            xPos1 = horizontal*frames1 + const.JUMP_ACCEL_FORWARDS*frames1*(frames1+1)/2*np.cos(vectorAngle)
+            xPos2 = xPos1[-1] + const.SPEED_AIR_LIMIT*frames2
+            zPos = const.JUMP_ACCEL_SIDE*frames*(frames+1)*np.sin(vectorAngle)
+
+            xPos = np.concatenate((xPos1,xPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (const.SPEED_AIR_LIMIT < horizontal <= const.SPEED_JUMP_LIMIT) & (time <= jumpVectorTime):
+            frames = np.linspace(0,time,time+1)
+            xPos = horizontal*frames
+            zPos = const.JUMP_ACCEL_SIDE*frames*(frames+1)/2*np.sin(vectorAngle)
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (const.SPEED_AIR_LIMIT < horizontal <= const.SPEED_JUMP_LIMIT) & (time > jumpVectorTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpVectorTime,jumpVectorTime+1)
+            frames2 = np.linspace(1,time-jumpVectorTime,time-jumpVectorTime)
+            xPos = horizontal*frames
+            zPos1 = const.JUMP_ACCEL_SIDE*frames1*(frames1+1)/2*np.sin(vectorAngle)
+            zPos2 = zPos1[-1] + horizontal*frames2
+
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+    elif (np.pi/2 >= vectorAngle > 0) & (vectorAngle == 1):
+        if (horizontal < const.SPEED_AIR_LIMIT) & (jumpVectorTime < time <= jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpVectorTime,jumpVectorTime+1)
+            frames2 = np.linspace(1,time-jumpVectorTime,time-jumpVectorTime)
+            xPos = horizontal*frames + const.JUMP_ACCEL_FORWARDS*frames*(frames+1)/2*np.cos(vectorAngle)
+            zPos1 = -const.JUMP_ACCEL_SIDE*frames1*(frames1+1)/2*np.sin(vectorAngle)
+            zPos2 = zPos1[-1] + horizontal*frames2
+
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (horizontal < const.SPEED_AIR_LIMIT) & (jumpVectorTime >= time > jumpAccelTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpAccelTime,jumpAccelTime+1)
+            frames2 = np.linspace(1,time-jumpAccelTime,time-jumpAccelTime)
+            xPos1 = horizontal*frames1 + const.JUMP_ACCEL_FORWARDS*frames1*(frames1+1)/2*np.cos(vectorAngle)
+            xPos2 = xPos1[-1] + const.SPEED_AIR_LIMIT*frames2
+            zPos = -const.JUMP_ACCEL_SIDE*frames*(frames+1)*np.sin(vectorAngle)
+
+            xPos = np.concatenate((xPos1,xPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (const.SPEED_AIR_LIMIT < horizontal <= const.SPEED_JUMP_LIMIT) & (time <= jumpVectorTime):
+            frames = np.linspace(0,time,time+1)
+            xPos = horizontal*frames
+            zPos = -const.JUMP_ACCEL_SIDE*frames*(frames+1)/2*np.sin(vectorAngle)
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+        elif (const.SPEED_AIR_LIMIT < horizontal <= const.SPEED_JUMP_LIMIT) & (time > jumpVectorTime):
+            frames = np.linspace(0,time,time+1)
+            frames1 = np.linspace(0,jumpVectorTime,jumpVectorTime+1)
+            frames2 = np.linspace(1,time-jumpVectorTime,time-jumpVectorTime)
+            xPos = horizontal*frames
+            zPos1 = -const.JUMP_ACCEL_SIDE*frames1*(frames1+1)/2*np.sin(vectorAngle)
+            zPos2 = zPos1[-1] - horizontal*frames2
+
+            zPos = np.concatenate((zPos1,zPos2))
+
+            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+
+            xPos = newXPos
+            zPos = newZPos
+
+    return np.array([xPos,zPos])
 
 pos = np.array([0,0,0])
 v0 = np.array([1,0,0])
@@ -698,7 +881,7 @@ ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
 ax.set_xlim(-1200,0)
-ax.set_ylim(-1200,0)
+ax.set_ylim(-600,600)
 ax.set_zlim(0,1200)
 ax.set_title('Cap Bounce with Vector')
 plt.show()
