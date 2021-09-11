@@ -75,7 +75,8 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     elif np.cross(stickDir,vxz) < 0:
         vectorDir = -1
 
-    vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))) # calculates the time to reach maximum speed given your vector angle
+    if vectorAngle != 0:
+        vectorTimeCapJump = m.floor(const.SPEED_CAP_JUMP_H/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle))) # calculates the time to reach maximum speed given your vector angle
 
 
     if vectorAngle == 0:
@@ -92,8 +93,8 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
     if (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
         if time <= vectorTimeCapJump:
             frames = np.linspace(0,time,time+1)
-            xPos = (pos[0] + speedCapJumpH*(frames+1))
-            zPos = (pos[2] + jumpAccelSide*(frames+1) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
+            xPos = (pos[0] + speedCapJumpH*(frames))
+            zPos = (pos[2] + jumpAccelSide*(frames) + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
     
             newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
             newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
@@ -158,13 +159,14 @@ def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
     return np.array(yPos)
 
 pos = np.array([0,0,0])
-v0 = np.array([1,0,0])
-stickAngle = -np.pi/2
+v0 = np.array([0,0,1])
+stickAngle = 0
 time = 80
-x = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
-z = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
-y = capJumpY(pos, const.SPEED_CAP_JUMP_V, const.GRAVITY_CAP_JUMP, time)
-ax.plot3D(x,z,y)
+x1 = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[0]
+z1 = capJumpXZ(pos, v0, const.SPEED_CAP_JUMP_H, stickAngle, const.JUMP_ACCEL_FORWARDS, const.JUMP_ACCEL_BACKWARDS, const.JUMP_ACCEL_SIDE, time)[1]
+y1 = capJumpY(pos, const.SPEED_CAP_JUMP_V, const.GRAVITY_CAP_JUMP, time)
+
+ax.plot3D(x1,z1,y1,'r')
 ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
