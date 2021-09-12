@@ -520,19 +520,19 @@ def capThrowXZFall(pos, v0, speedCapThrowFall, stickAngle, jumpAccelForwards, ju
 def capThrowY(pos, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
     if time <= gravityCapThrowFrame:
         frames = np.linspace(0,time,time+1)
-        yPos = pos[2] + speedCapThrow*(frames+1) + gravityCapThrow*frames*(frames+1)/2
+        yPos = pos[1] + speedCapThrow*(frames+1) + gravityCapThrow*frames*(frames+1)/2
 
     if tVTimeCapThrow >= time > gravityCapThrowFrame:
         frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
         frames2 = np.linspace(1,time-gravityCapThrowFrame,time-gravityCapThrowFrame)
-        yPos1 = pos[2] + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
+        yPos1 = pos[1] + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.GRAVITY*(frames2)*(frames2+1)/2
         yPos = np.concatenate((yPos1, yPos2))
     if time > tVTimeCapThrow:
         frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
         frames2 = np.linspace(1,tVTimeCapThrow-gravityCapThrowFrame,tVTimeCapThrow-gravityCapThrowFrame)
         frames3 = np.linspace(1,time-tVTimeCapThrow,time-tVTimeCapThrow)
-        yPos1 = pos[2] + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
+        yPos1 = pos[1] + speedCapThrow*(frames1+1) + gravityCapThrow*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.GRAVITY*(frames2)*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
         yPos = np.concatenate((yPos1,yPos2))
@@ -1250,7 +1250,7 @@ def doubleJumpY(pos, v0, buttonHeld, time):
     if horizontal < const.SPEED_JUMP_MINV:
         jumpSpeed = const.SPEED_JUMP
     elif const.SPEED_JUMP_MINV <= horizontal <= const.SPEED_JUMP_MAXV:
-        jumpSpeed = const.SPEED_JUMP_DOUBLE + 5/22*(horizontal - const.SPEED_JUMP_MINV)
+        jumpSpeed = const.SPEED_JUMP_DOUBLE + 3/22*(horizontal - const.SPEED_JUMP_MINV)
     elif horizontal > const.SPEED_JUMP_MAXV:
         jumpSpeed = const.SPEED_JUMP_DOUBLE_MAX
     
@@ -1342,14 +1342,14 @@ pos = np.array([0,0,0])
 v0 = np.array([14,0,0])
 buttonHeld = 10
 stickAngle = 0
-time1 = 42
+time1 = 43
 xJumpS = jumpXZ(pos, v0, stickAngle, time1)[0]
 zJumpS = jumpXZ(pos, v0, stickAngle, time1)[1]
 yJumpS = singleJumpY(pos, v0, buttonHeld, time1)
 
 posJumpS = np.array([xJumpS[-1],yJumpS[-1],zJumpS[-1]])
 velJumpS = np.array([xJumpS[-1]-xJumpS[-2],yJumpS[-1]-yJumpS[-2],zJumpS[-1]-zJumpS[-2]])
-time2 = 46
+time2 = 45
 
 xJumpD = jumpXZ(posJumpS,velJumpS,stickAngle,time2)[0]
 zJumpD = jumpXZ(posJumpS,velJumpS,stickAngle,time2)[1]
@@ -1357,21 +1357,51 @@ yJumpD = doubleJumpY(posJumpS, velJumpS, buttonHeld, time2)
 
 posJumpD = np.array([xJumpD[-1],yJumpD[-1],zJumpD[-1]])
 velJumpD = np.array([xJumpD[-1]-xJumpD[-2],yJumpD[-1]-yJumpD[-2],zJumpD[-1]-zJumpD[-2]])
-time3 = 67
+time3 = 35
 
-newStickAngle = np.pi
+newStickAngle = np.pi/2
 xJumpT = jumpXZ(posJumpD,velJumpD,newStickAngle,time3)[0]
 zJumpT = jumpXZ(posJumpD,velJumpD,newStickAngle,time3)[1]
 yJumpT = tripleJumpY(posJumpD,buttonHeld,time3)
 
+posJumpT = np.array([xJumpT[-1],yJumpT[-1],zJumpT[-1]])
+velJumpT = np.array([1,0,0])
+capThrowTime = 26
+capThrowAngle = 0
+
+capX = capThrowXZ(posJumpT,velJumpT,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,capThrowAngle,capThrowAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capThrowTime)[0]
+capZ = capThrowXZ(posJumpT,velJumpT,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,capThrowAngle,capThrowAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capThrowTime)[1]
+capY = capThrowY(posJumpT,const.SPEED_CAP_THROW_V,const.GRAVITY_CAP_THROW,const.GRAVITY_CAP_THROW_FRAME,capThrowTime)
+
+posCapThrow = np.array([capX[-1],capY[-1],capZ[-1]])
+velCapThrow = np.array([capX[-1]-capX[-2],capY[-1]-capY[-2],capZ[-1]-capZ[-2]])
+diveTime = 23
+diveAngle = 0
+
+xDive = diveXZ(posCapThrow,diveAngle,const.SPEED_DIVE_H,diveTime)[0]
+zDive = diveXZ(posCapThrow,diveAngle,const.SPEED_DIVE_H,diveTime)[1]
+yDive = diveY(posCapThrow,const.SPEED_DIVE_V,const.GRAVITY_DIVE,diveTime)
+
+posDive = np.array([xDive[-1],yDive[-1],zDive[-1]])
+velDive = np.array([xDive[-1]-xDive[-2],yDive[-1]-yDive[-2],zDive[-1]-zDive[-2]])
+capTime = 60
+capAngle = np.pi/2
+
+xCapJump = capJumpXZ(posDive,velDive,const.SPEED_CAP_JUMP_H,capAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capTime)[0]
+zCapJump = capJumpXZ(posDive,velDive,const.SPEED_CAP_JUMP_H,capAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capTime)[1]
+yCapJump = capJumpY(posDive,const.SPEED_CAP_JUMP_V,const.GRAVITY_CAP_JUMP,capTime)
+
 ax.plot3D(xJumpS,zJumpS,yJumpS,'r')
-ax.plot3D(xJumpD,zJumpD,yJumpD,'b')
-ax.plot3D(xJumpT,zJumpT,yJumpT,'g')
+ax.plot3D(xJumpD,zJumpD,yJumpD,'r')
+ax.plot3D(xJumpT,zJumpT,yJumpT,'r')
+ax.plot3D(capX,capZ,capY,'r')
+ax.plot3D(xDive,zDive,yDive,'r')
+ax.plot3D(xCapJump,zCapJump,yCapJump,'r')
 ax.set_xlabel('x position')
 ax.set_ylabel('z position')
 ax.set_zlabel('y position')
-ax.set_xlim(0,2500)
-ax.set_ylim(-1250,1250)
-ax.set_zlim(0,2500)
-ax.set_title('Triple Jump Turn-Around')
+ax.set_xlim(0,3500)
+ax.set_ylim(-1750,1750)
+ax.set_zlim(0,3500)
+ax.set_title('Triple Jump Vector, Cap Throw Dive Vector')
 plt.show()
