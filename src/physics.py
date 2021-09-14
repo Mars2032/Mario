@@ -12,7 +12,14 @@ tVTimeCapJump = m.floor((const.TERMINAL_V-const.SPEED_DIVE_V)/const.GRAVITY_CAP_
 tVTimeCapThrow = m.floor((const.TERMINAL_V-(const.SPEED_CAP_THROW_V+const.GRAVITY_CAP_THROW*const.GRAVITY_CAP_THROW_FRAME))/const.GRAVITY+const.GRAVITY_CAP_THROW_FRAME)
 
 # Lol Lol i don't hate cap throw !! i swear !!
-def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFrame, stickAngle, stickAngleChange, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
+def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
+    speedCapThrowFall = const.SPEED_CAP_THROW_FALL
+    speedCapThrowLimit = const.SPEED_CAP_THROW_LIMIT
+    gravityCapThrowFrame = const.GRAVITY_CAP_THROW_FRAME
+    jumpAccelForwards = const.JUMP_ACCEL_FORWARDS
+    jumpAccelBackwards = const.JUMP_ACCEL_BACKWARDS
+    jumpAccelSide = const.JUMP_ACCEL_SIDE
+    
     vxz = np.array([v0[0],v0[2]])
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
@@ -23,6 +30,7 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
     stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
     
     vectorAngle = np.arccos(round(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)),5)) # calculates the angle between the stick direction and velocity
+
 
     
     # determine the direction of the vector
@@ -236,7 +244,12 @@ def capThrowXZ(pos, v0, speedCapThrowLimit, speedCapThrowFall, gravityCapThrowFr
             zPos = np.concatenate((zPos,fallZ))
     return np.array([xPos,zPos])
 
-def capThrowXZFall(pos, v0, speedCapThrowFall, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
+def capThrowXZFall(pos, v0, stickAngle, time):
+    speedCapThrowFall = const.SPEED_CAP_THROW_FALL
+    jumpAccelForwards = const.JUMP_ACCEL_FORWARDS
+    jumpAccelBackwards = const.JUMP_ACCEL_BACKWARDS
+    jumpAccelSide = const.JUMP_ACCEL_SIDE
+    
     vxz = np.array([v0[0],v0[2]])
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
     horizontal = np.linalg.norm(vxz) # magnitude of said vector
@@ -517,7 +530,11 @@ def capThrowXZFall(pos, v0, speedCapThrowFall, stickAngle, jumpAccelForwards, ju
             zPos = newZPos
     return np.array([xPos,zPos])
 
-def capThrowY(pos, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
+def capThrowY(pos, time):
+    speedCapThrow = const.SPEED_CAP_THROW_V
+    gravityCapThrow = const.GRAVITY_CAP_THROW
+    gravityCapThrowFrame = const.GRAVITY_CAP_THROW_FRAME
+
     if time <= gravityCapThrowFrame:
         frames = np.linspace(0,time,time+1)
         yPos = pos[1] + speedCapThrow*(frames+1) + gravityCapThrow*frames*(frames+1)/2
@@ -539,7 +556,9 @@ def capThrowY(pos, speedCapThrow, gravityCapThrow, gravityCapThrowFrame, time):
         yPos = np.concatenate((yPos,yPos3))
     return yPos
 
-def diveXZ(pos, diveAngle, speedDive, time):
+def diveXZ(pos, diveAngle, time):
+    speedDive = const.SPEED_DIVE_H
+
     frames = np.linspace(0,time,time+1)
     xPos = speedDive*frames
     zPos = 0*frames
@@ -552,7 +571,10 @@ def diveXZ(pos, diveAngle, speedDive, time):
 
     return np.array([xPos,zPos])
 
-def diveY(pos, speedDiveV, gravityDive, time):
+def diveY(pos, time):
+    speedDiveV = const.SPEED_DIVE_V
+    gravityDive = const.GRAVITY_DIVE
+
     if time <= tVTimeDive:
         frames = np.linspace(0,time,time+1)
         yPos = pos[1] + speedDiveV*(frames) + gravityDive*frames*(frames+1)/2
@@ -565,7 +587,12 @@ def diveY(pos, speedDiveV, gravityDive, time):
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
 
-def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBackwards, jumpAccelSide, time):
+def capJumpXZ(pos, v0, stickAngle, time):
+    speedCapJumpH = const.SPEED_CAP_JUMP_H
+    jumpAccelForwards = const.JUMP_ACCEL_FORWARDS
+    jumpAccelBackwards = const.JUMP_ACCEL_BACKWARDS
+    jumpAccelSide = const.JUMP_ACCEL_SIDE
+
     vxz = np.array([v0[0],v0[2]])
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
@@ -651,7 +678,10 @@ def capJumpXZ(pos, v0, speedCapJumpH, stickAngle, jumpAccelForwards, jumpAccelBa
 
     return np.array([xPos,zPos])
       
-def capJumpY(pos, speedCapJumpV, gravityCapJump, time):
+def capJumpY(pos, time):
+    speedCapJumpV = const.SPEED_CAP_JUMP_V
+    gravityCapJump = const.GRAVITY_CAP_JUMP
+
     if time <= tVTimeCapJump:
         frames = np.linspace(0,time,time+1)
         yPos = pos[1] + speedCapJumpV*(frames) + gravityCapJump*frames*(frames+1)/2
@@ -1338,70 +1368,3 @@ def capReturnJumpY(pos, buttonHeld, time):
 
     return np.array(yPos)
 
-pos = np.array([0,0,0])
-v0 = np.array([14,0,0])
-buttonHeld = 10
-stickAngle = 0
-time1 = 43
-xJumpS = jumpXZ(pos, v0, stickAngle, time1)[0]
-zJumpS = jumpXZ(pos, v0, stickAngle, time1)[1]
-yJumpS = singleJumpY(pos, v0, buttonHeld, time1)
-
-posJumpS = np.array([xJumpS[-1],yJumpS[-1],zJumpS[-1]])
-velJumpS = np.array([xJumpS[-1]-xJumpS[-2],yJumpS[-1]-yJumpS[-2],zJumpS[-1]-zJumpS[-2]])
-time2 = 45
-
-xJumpD = jumpXZ(posJumpS,velJumpS,stickAngle,time2)[0]
-zJumpD = jumpXZ(posJumpS,velJumpS,stickAngle,time2)[1]
-yJumpD = doubleJumpY(posJumpS, velJumpS, buttonHeld, time2)
-
-posJumpD = np.array([xJumpD[-1],yJumpD[-1],zJumpD[-1]])
-velJumpD = np.array([xJumpD[-1]-xJumpD[-2],yJumpD[-1]-yJumpD[-2],zJumpD[-1]-zJumpD[-2]])
-time3 = 35
-
-newStickAngle = np.pi/2
-xJumpT = jumpXZ(posJumpD,velJumpD,newStickAngle,time3)[0]
-zJumpT = jumpXZ(posJumpD,velJumpD,newStickAngle,time3)[1]
-yJumpT = tripleJumpY(posJumpD,buttonHeld,time3)
-
-posJumpT = np.array([xJumpT[-1],yJumpT[-1],zJumpT[-1]])
-velJumpT = np.array([1,0,0])
-capThrowTime = 26
-capThrowAngle = 0
-
-capX = capThrowXZ(posJumpT,velJumpT,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,capThrowAngle,capThrowAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capThrowTime)[0]
-capZ = capThrowXZ(posJumpT,velJumpT,const.SPEED_CAP_THROW_LIMIT,const.SPEED_CAP_THROW_FALL,const.GRAVITY_CAP_THROW_FRAME,capThrowAngle,capThrowAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capThrowTime)[1]
-capY = capThrowY(posJumpT,const.SPEED_CAP_THROW_V,const.GRAVITY_CAP_THROW,const.GRAVITY_CAP_THROW_FRAME,capThrowTime)
-
-posCapThrow = np.array([capX[-1],capY[-1],capZ[-1]])
-velCapThrow = np.array([capX[-1]-capX[-2],capY[-1]-capY[-2],capZ[-1]-capZ[-2]])
-diveTime = 23
-diveAngle = 0
-
-xDive = diveXZ(posCapThrow,diveAngle,const.SPEED_DIVE_H,diveTime)[0]
-zDive = diveXZ(posCapThrow,diveAngle,const.SPEED_DIVE_H,diveTime)[1]
-yDive = diveY(posCapThrow,const.SPEED_DIVE_V,const.GRAVITY_DIVE,diveTime)
-
-posDive = np.array([xDive[-1],yDive[-1],zDive[-1]])
-velDive = np.array([xDive[-1]-xDive[-2],yDive[-1]-yDive[-2],zDive[-1]-zDive[-2]])
-capTime = 60
-capAngle = np.pi/2
-
-xCapJump = capJumpXZ(posDive,velDive,const.SPEED_CAP_JUMP_H,capAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capTime)[0]
-zCapJump = capJumpXZ(posDive,velDive,const.SPEED_CAP_JUMP_H,capAngle,const.JUMP_ACCEL_FORWARDS,const.JUMP_ACCEL_BACKWARDS,const.JUMP_ACCEL_SIDE,capTime)[1]
-yCapJump = capJumpY(posDive,const.SPEED_CAP_JUMP_V,const.GRAVITY_CAP_JUMP,capTime)
-
-ax.plot3D(xJumpS,zJumpS,yJumpS,'r')
-ax.plot3D(xJumpD,zJumpD,yJumpD,'r')
-ax.plot3D(xJumpT,zJumpT,yJumpT,'r')
-ax.plot3D(capX,capZ,capY,'r')
-ax.plot3D(xDive,zDive,yDive,'r')
-ax.plot3D(xCapJump,zCapJump,yCapJump,'r')
-ax.set_xlabel('x position')
-ax.set_ylabel('z position')
-ax.set_zlabel('y position')
-ax.set_xlim(0,3500)
-ax.set_ylim(-1750,1750)
-ax.set_zlim(0,3500)
-ax.set_title('Triple Jump Vector, Cap Throw Dive Vector')
-plt.show()
