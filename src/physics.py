@@ -697,7 +697,6 @@ def capJumpY(pos, time):
 def jumpXZ(pos, v0, stickAngle, time):
     vxz = np.array([v0[0],v0[2]])
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
-    
     if horizontal == 0.9999999999999999:
         horizontal = 1  #float error correction, because otherwise arccos will break :)
     xStick = np.cos(stickAngle)
@@ -721,6 +720,7 @@ def jumpXZ(pos, v0, stickAngle, time):
             horizontal = const.SPEED_JUMP_LIMIT
         if vectorAngle != 0:
             jumpVectorTime = int(abs(m.floor(horizontal/(const.JUMP_ACCEL_SIDE*np.sin(vectorAngle)))))
+        jumpAccelTime = 0
         jumpAccelForwards = int(abs(m.floor(horizontal/(const.JUMP_ACCEL_FORWARDS*np.cos(vectorAngle)))))
         jumpAccelBackwards = int(abs(m.floor(horizontal/(const.JUMP_ACCEL_BACKWARDS*np.cos(vectorAngle)))))
         jumpAccelBackwardsTime = jumpAccelForwards + jumpAccelBackwards
@@ -1367,4 +1367,43 @@ def capReturnJumpY(pos, buttonHeld, time):
         yPos = np.concatenate((yPos1,yPos2,yPos3))
 
     return np.array(yPos)
+
+def vaultY(pos, time):
+    jumpSpeed = const.SPEED_VAULT_V
+    gravity = const.GRAVITY_VAULT
+
+    terminalVelocityTime = m.floor((const.TERMINAL_V-jumpSpeed)/gravity)
+
+    if time <= terminalVelocityTime:
+        frames = np.linspace(0,time,time+1)
+        yPos = pos[1] + jumpSpeed*frames + gravity*frames*(frames+1)/2
+
+    elif time > terminalVelocityTime:
+        frames1 = np.linspace(0,terminalVelocityTime,terminalVelocityTime+1)
+        frames2 = np.linspace(1,time-terminalVelocityTime,time-terminalVelocityTime)
+        yPos1 = pos[1] + jumpSpeed*frames1 + gravity*frames1*(frames1+1)/2
+        yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
+
+        yPos = np.concatenate((yPos1,yPos2))
+
+    return np.array(yPos)
+
+def graphJumpSingle(pos, v0, stickAngle, buttonHeld, time):
+
+    x = jumpXZ(pos, v0, stickAngle, time)[0]
+    z = jumpXZ(pos, v0, stickAngle, time)[1]
+    y = singleJumpY(pos, v0, buttonHeld, time)
+
+    ax.plot3D(x,z,y)
+
+    return np.array([x[-1],y[-1],z[-1]])
+
+pos = np.array([0,0,0])
+v0 = np.array([24,0,0])
+stickAngle = 0
+buttonHeld = 1
+time = 30
+
+graphJumpSingle(pos, v0, stickAngle, buttonHeld, time)
+plt.show()
 
