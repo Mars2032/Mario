@@ -471,7 +471,7 @@ def capJumpY(pos, time):
         yPos = np.concatenate((yPos1, yPos2))
     return np.array(yPos)
 
-
+# theblurredone
 def jumpXZ(pos, v0, stickAngle, time):
     vxz = np.array([v0[0],v0[2]])
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
@@ -798,20 +798,16 @@ def jumpXZ(pos, v0, stickAngle, time):
 
 
 def singleJumpY(pos, v0, buttonHeld, time):
+    horizontal = abs(np.linalg.norm(np.array([v0[0],v0[2]])))
     if buttonHeld > const.JUMP_HOLD_FRAME:
         buttonHeld = const.JUMP_HOLD_FRAME
-    horizontal = abs(np.linalg.norm(np.array([v0[0],v0[2]])))
-
-    
     if horizontal < const.SPEED_JUMP_MINV:
         jumpSpeed = const.SPEED_JUMP
     elif const.SPEED_JUMP_MINV <= horizontal <= const.SPEED_JUMP_MAXV:
         jumpSpeed = const.SPEED_JUMP + 5/22*(horizontal - const.SPEED_JUMP_MINV)
     elif horizontal > const.SPEED_JUMP_MAXV:
         jumpSpeed = const.SPEED_JUMP_MAX
-    
     terminalVelocityTime = m.floor((const.TERMINAL_V-jumpSpeed)/const.GRAVITY) + buttonHeld-1
-
     if time <= terminalVelocityTime:
         if time >= buttonHeld:
             frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -820,7 +816,6 @@ def singleJumpY(pos, v0, buttonHeld, time):
             print("You can't hold a button for longer than you're jumping!")
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY*frames2*(frames2+1)/2
-
         yPos = np.concatenate((yPos1,yPos2))
     elif time > terminalVelocityTime:
         frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -829,27 +824,21 @@ def singleJumpY(pos, v0, buttonHeld, time):
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY*frames2*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
-
         yPos = np.concatenate((yPos1,yPos2,yPos3))
-
     return np.array(yPos)
 
 
 def doubleJumpY(pos, v0, buttonHeld, time):
+    horizontal = abs(np.linalg.norm(np.array([v0[0],v0[2]])))
     if buttonHeld > const.JUMP_HOLD_FRAME:
         buttonHeld = const.JUMP_HOLD_FRAME
-    horizontal = abs(np.linalg.norm(np.array([v0[0],v0[2]])))
-
-    
     if horizontal < const.SPEED_JUMP_MINV:
         jumpSpeed = const.SPEED_JUMP
     elif const.SPEED_JUMP_MINV <= horizontal <= const.SPEED_JUMP_MAXV:
         jumpSpeed = const.SPEED_JUMP_DOUBLE + 3/22*(horizontal - const.SPEED_JUMP_MINV)
     elif horizontal > const.SPEED_JUMP_MAXV:
         jumpSpeed = const.SPEED_JUMP_DOUBLE_MAX
-    
     terminalVelocityTime = m.floor((const.TERMINAL_V-jumpSpeed)/const.GRAVITY) + buttonHeld-1
-
     if time <= terminalVelocityTime:
         if time >= buttonHeld:
             frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -858,7 +847,6 @@ def doubleJumpY(pos, v0, buttonHeld, time):
             print("You can't hold a button for longer than you're jumping!")
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY*frames2*(frames2+1)/2
-
         yPos = np.concatenate((yPos1,yPos2))
     elif time > terminalVelocityTime:
         frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -867,29 +855,23 @@ def doubleJumpY(pos, v0, buttonHeld, time):
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY*frames2*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
-
         yPos = np.concatenate((yPos1,yPos2,yPos3))
-
     return np.array(yPos)
 
 
 def tripleJumpY(pos, buttonHeld, time):
     if buttonHeld > const.JUMP_HOLD_FRAME:
         buttonHeld = const.JUMP_HOLD_FRAME
-    
     jumpSpeed = const.SPEED_JUMP_TRIPLE
-    
     terminalVelocityTime = abs(m.floor((const.TERMINAL_V-jumpSpeed)/const.GRAVITY_JUMP_CONTINUOUS)) + buttonHeld-1
-
     if time <= terminalVelocityTime:
         if time >= buttonHeld:
             frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
             frames2 = np.linspace(1,time-buttonHeld,time-buttonHeld)
-        elif time <= buttonHeld:
+        elif time < buttonHeld:
             print("You can't hold a button for longer than you're jumping!")
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY_JUMP_CONTINUOUS*frames2*(frames2+1)/2
-
         yPos = np.concatenate((yPos1,yPos2))
     elif time > terminalVelocityTime:
         frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -898,20 +880,15 @@ def tripleJumpY(pos, buttonHeld, time):
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY_JUMP_CONTINUOUS*frames2*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
-
         yPos = np.concatenate((yPos1,yPos2,yPos3))
-
     return np.array(yPos)
 
 
 def capReturnJumpY(pos, buttonHeld, time):
     if buttonHeld > const.JUMP_HOLD_FRAME:
         buttonHeld = const.JUMP_HOLD_FRAME
-
     jumpSpeed = const.SPEED_JUMP_CAP_RETURN
-    
     terminalVelocityTime = m.floor((const.TERMINAL_V-jumpSpeed)/const.GRAVITY_CAP_RETURN) + buttonHeld-1
-
     if time <= terminalVelocityTime:
         if time >= buttonHeld:
             frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -920,7 +897,6 @@ def capReturnJumpY(pos, buttonHeld, time):
             print("You can't hold a button for longer than you're jumping!")
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY_CAP_RETURN*frames2*(frames2+1)/2
-
         yPos = np.concatenate((yPos1,yPos2))
     elif time > terminalVelocityTime:
         frames1 = np.linspace(0,buttonHeld,buttonHeld+1)
@@ -929,50 +905,38 @@ def capReturnJumpY(pos, buttonHeld, time):
         yPos1 = pos[1] + jumpSpeed*frames1
         yPos2 = yPos1[-1] + jumpSpeed*frames2 + const.GRAVITY_CAP_RETURN*frames2*(frames2+1)/2
         yPos3 = yPos2[-1] + const.TERMINAL_V*frames3
-
         yPos = np.concatenate((yPos1,yPos2,yPos3))
-
     return np.array(yPos)
 
 
 def vaultY(pos, time):
     jumpSpeed = const.SPEED_VAULT_V
     gravity = const.GRAVITY_VAULT
-
     terminalVelocityTime = m.floor((const.TERMINAL_V-jumpSpeed)/gravity)
-
     if time <= terminalVelocityTime:
         frames = np.linspace(0,time,time+1)
         yPos = pos[1] + jumpSpeed*frames + gravity*frames*(frames+1)/2
-
     elif time > terminalVelocityTime:
         frames1 = np.linspace(0,terminalVelocityTime,terminalVelocityTime+1)
         frames2 = np.linspace(1,time-terminalVelocityTime,time-terminalVelocityTime)
         yPos1 = pos[1] + jumpSpeed*frames1 + gravity*frames1*(frames1+1)/2
         yPos2 = yPos1[-1] + const.TERMINAL_V*frames2
-
         yPos = np.concatenate((yPos1,yPos2))
-
     return np.array(yPos)
 
 
 def graphJumpSingle(pos, v0, stickAngle, buttonHeld, time):
-
     x = jumpXZ(pos, v0, stickAngle, time)[0]
     z = jumpXZ(pos, v0, stickAngle, time)[1]
     y = singleJumpY(pos, v0, buttonHeld, time)
-
     ax.plot3D(x,z,y)
-
     return np.array([x[-1],y[-1],z[-1]])
 
 
 def graphJumpTriple(pos, v0, stickAngle, buttonHeld, time):
-
     x = jumpXZ(pos, v0, stickAngle, time)[0]
     z = jumpXZ(pos, v0, stickAngle, time)[1]
     y = tripleJumpY(pos, buttonHeld, time)
-
     ax.plot3D(x,z,y)
     return np.array([x[-1],y[-1],z[-1]])
 
