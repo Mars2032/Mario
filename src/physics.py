@@ -24,15 +24,13 @@ def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
     vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the cap jump
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
     if horizontal == 0.9999999999999999:
-        horizontal = 1  #float error correction, because otherwise arccos will break :)
+        horizontal = int(horizontal)  #float error correction, because otherwise arccos will break :)
     xStick = np.cos(stickAngle)
     yStick = np.sin(stickAngle)
     stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
     
     vectorAngle = np.arccos(round(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)),5)) # calculates the angle between the stick direction and velocity
 
-
-    
     # determine the direction of the vector
     if np.cross(stickDir,vxz) > 0:
         vectorDir = 1
@@ -43,125 +41,57 @@ def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
         reverseFallTime = int(abs(m.floor((0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle))+(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle))))))
         reverseFallBackwards = int(abs(m.floor(0-speedCapThrowLimit)/(jumpAccelBackwards*np.cos(vectorAngle))))
         reverseFallForwards = int(abs(m.floor(speedCapThrowLimit/(jumpAccelForwards*np.cos(vectorAngle)))))
+    
     if time <= gravityCapThrowFrame:
+        frames = np.linspace(0,time,time+1)
         if vectorAngle == 0:
-            frames = np.linspace(0,time,time+1)
             xPos = pos[0] + speedCapThrowLimit*frames
             zPos = pos[2] + 0*frames
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
         elif vectorAngle == np.pi:
-            frames = np.linspace(0,time,time+1)
             xPos = pos[0] + speedCapThrowLimit*frames + jumpAccelBackwards*frames*(frames+1)/2
             zPos = pos[2] + 0*frames
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
-            frames = np.linspace(0,time,time+1)
-            xPos = (pos[0] + speedCapThrowLimit*(frames))
-            zPos = (pos[2] + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
-    
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
+            xPos = pos[0] + speedCapThrowLimit*frames
+            zPos = pos[2] + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
-            frames = np.linspace(0,time,time+1)
-            xPos = (pos[0] + speedCapThrowLimit*(frames))
-            zPos = (pos[2] + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle))
-    
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
+            xPos = pos[0] + speedCapThrowLimit*frames
+            zPos = pos[2] - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == -1):
-            frames = np.linspace(0,time,time+1)
             xPos = pos[0] + speedCapThrowLimit*frames + jumpAccelBackwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = pos[2] + jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == 1):
-            frames = np.linspace(0,time,time+1)
             xPos = pos[0] + speedCapThrowLimit*frames + jumpAccelBackwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = pos[2] - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
+        newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
+        newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
+        xPos = newXPos
+        zPos = newZPos
     elif (time > gravityCapThrowFrame) & (np.pi/2 >= vectorAngle >= 0):
         if vectorAngle == 0:
             frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames2 = time-gravityCapThrowFrame
             xPos = speedCapThrowLimit*frames1
             zPos = 0*frames1
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames2)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames2)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
             frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames2 = time-gravityCapThrowFrame
             xPos = speedCapThrowLimit*frames1
             zPos = jumpAccelSide*frames1*(frames1+1)/2*np.sin(vectorAngle)
-            
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames2)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames2)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
             frames1 = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames2 = time-gravityCapThrowFrame
             xPos = speedCapThrowLimit*frames1
             zPos = 0 - jumpAccelSide*frames1*(frames1+1)/2*np.sin(vectorAngle)
-            
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames2)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames2)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
+        newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+        newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+        xPos = newXPos
+        zPos = newZPos
+        pos = np.array([xPos[-1],0,zPos[-1]])
+        v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
+        fallX = capThrowXZFall(pos, v0, stickAngleChange, frames2)[0]
+        fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames2)[1]
+        xPos = np.concatenate((xPos,fallX))
+        zPos = np.concatenate((zPos,fallZ))
     elif (time > gravityCapThrowFrame) & (reverseFallTime < gravityCapThrowFrame):
         if vectorAngle == np.pi:
             frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
@@ -173,23 +103,7 @@ def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = 0*frames
-            
             xPos = np.concatenate((xPos1,xPos2,xPos3))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames4)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames4)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == -1):
             frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames1 = np.linspace(0,reverseFallBackwards,reverseFallBackwards+1)
@@ -200,22 +114,7 @@ def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-            
             xPos = np.concatenate((xPos1,xPos2,xPos3))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames4)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames4)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == 1):
             frames = np.linspace(0,gravityCapThrowFrame,gravityCapThrowFrame+1)
             frames1 = np.linspace(0,reverseFallBackwards,reverseFallBackwards+1)
@@ -226,22 +125,17 @@ def capThrowXZ(pos, v0, stickAngle, stickAngleChange, time):
             xPos2 = xPos1[-1] - jumpAccelForwards*frames2*(frames2+1)/2
             xPos3 = xPos2[-1] - speedCapThrowLimit*frames3
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-            
             xPos = np.concatenate((xPos1,xPos2,xPos3))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
-            pos = np.array([xPos[-1],0,zPos[-1]])
-            v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
-
-            fallX = capThrowXZFall(pos, v0, stickAngleChange, frames4)[0]
-            fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames4)[1]
-
-            xPos = np.concatenate((xPos,fallX))
-            zPos = np.concatenate((zPos,fallZ))
+        newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+        newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+        xPos = newXPos
+        zPos = newZPos
+        pos = np.array([xPos[-1],0,zPos[-1]])
+        v0 = np.array([xPos[-1]-xPos[-2],0,zPos[-1]-zPos[-2]])
+        fallX = capThrowXZFall(pos, v0, stickAngleChange, frames4)[0]
+        fallZ = capThrowXZFall(pos, v0, stickAngleChange, frames4)[1]
+        xPos = np.concatenate((xPos,fallX))
+        zPos = np.concatenate((zPos,fallZ))
     return np.array([xPos,zPos])
 
 def capThrowXZFall(pos, v0, stickAngle, time):
@@ -278,63 +172,27 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelForwards*frames*(frames+1)/2
             zPos = 0*frames
-            
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelForwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelForwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
     elif (time <= reverseTimeFall) & (np.pi >= vectorAngle > np.pi/2):
         if vectorAngle == np.pi:
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelBackwards*frames*(frames+1)/2
             zPos =  0*frames
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == -1):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelBackwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == 1):
             frames = np.linspace(1,time,time)
             xPos = horizontal*frames + jumpAccelBackwards*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
     elif vectorTimeCapThrowFall >= time > fallAccelTime:
         if vectorAngle == 0:
             frames = np.linspace(1,time,time)
@@ -343,14 +201,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = horizontal*frames1 + jumpAccelForwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2*(frames2+1)/2
             zPos = 0*frames
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
             frames = np.linspace(1,time,time)
             frames1 = np.linspace(1,fallAccelTime,fallAccelTime)
@@ -358,14 +209,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 =  horizontal*frames1 + jumpAccelForwards*frames1*(frames1+1)/2*np.cos(vectorAngle)
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2*(frames2+1)/2
             zPos = jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
             frames = np.linspace(1,time,time)
             frames1 = np.linspace(1,fallAccelTime,fallAccelTime)
@@ -373,14 +217,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = horizontal*frames1 + jumpAccelForwards*frames1*(frames1+1)/2*np.cos(vectorAngle)
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2*(frames2+1)/2
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.sin(vectorAngle)
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
     elif vectorTimeCapThrowFall >= time > reverseTimeFall:
         if (vectorAngle == np.pi):
             frames = np.linspace(1,time,time)
@@ -389,14 +226,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = pos[0] + horizontal*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos = pos[2] + 0*frames
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle)
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle)
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == -1):
             frames = np.linspace(1,time,time)
             frames1 = np.linspace(1,reverseTimeFall,reverseTimeFall)
@@ -404,14 +234,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = horizontal*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2*np.cos(vectorAngle)
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos = jumpAccelSide*frames*(frames+1)/2*np.cos(vectorAngle)
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorDir == 1):
             frames = np.linspace(1,time,time)
             frames1 = np.linspace(1,reverseTimeFall,reverseTimeFall)
@@ -419,14 +242,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = horizontal*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2*np.cos(vectorAngle)
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos = 0 - jumpAccelSide*frames*(frames+1)/2*np.cos(vectorAngle)
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
     elif time > vectorTimeCapThrowFall:
         if vectorAngle == 0:
             frames = np.linspace(1,time,time)
@@ -435,14 +251,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 =  horizontal*frames1 + jumpAccelForwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2*(frames2+1)/2
             zPos = 0*frames
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif vectorAngle == np.pi:
             frames = np.linspace(1,time,time)
             frames1 = np.linspace(1,reverseTimeFall,reverseTimeFall)
@@ -450,14 +259,7 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos1 = horizontal*frames1 + jumpAccelBackwards*frames1*(frames1+1)/2
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos = 0*frames
-
             xPos = np.concatenate((xPos1,xPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == -1):
             frames1 = np.linspace(1,fallAccelTime,fallAccelTime)
             frames2 = np.linspace(1,time-fallAccelTime,time-fallAccelTime)
@@ -467,15 +269,8 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2
             zPos1 = jumpAccelSide*frames3*(frames3+1)/2*np.sin(vectorAngle)
             zPos2 = zPos1[-1] + speedCapThrowFall*frames4
-
             xPos = np.concatenate((xPos1,xPos2))
             zPos = np.concatenate((zPos1,zPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi/2 >= vectorAngle > 0) & (vectorDir == 1):
             frames1 = np.linspace(1,fallAccelTime,fallAccelTime)
             frames2 = np.linspace(1,time-fallAccelTime,time-fallAccelTime)
@@ -485,15 +280,8 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos2 = xPos1[-1] + speedCapThrowFall*frames2
             zPos1 = 0 - jumpAccelSide*frames3*(frames3+1)/2*np.sin(vectorAngle)
             zPos2 = zPos1[-1] - speedCapThrowFall*frames4
-
             xPos = np.concatenate((xPos1,xPos2))
             zPos = np.concatenate((zPos1,zPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorAngle == -1):
             frames1 = np.linspace(1,reverseTimeFall,reverseTimeFall)
             frames2 = np.linspace(1,time-reverseTimeFall,time-reverseTimeFall)
@@ -503,15 +291,8 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos1 = jumpAccelSide*frames3*(frames3+1)/2*np.sin(vectorAngle)
             zPos2 = zPos1[-1] + speedCapThrowFall*frames4
-
             xPos = np.concatenate((xPos1,xPos2))
             zPos = np.concatenate((zPos1,zPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
         elif (np.pi > vectorAngle > np.pi/2) & (vectorAngle == 1):
             frames1 = np.linspace(1,reverseTimeFall,reverseTimeFall)
             frames2 = np.linspace(1,time-reverseTimeFall,time-reverseTimeFall)
@@ -521,15 +302,12 @@ def capThrowXZFall(pos, v0, stickAngle, time):
             xPos2 = xPos1[-1] - speedCapThrowFall*frames2
             zPos1 = 0 - jumpAccelSide*frames3*(frames3+1)/2*np.sin(vectorAngle)
             zPos2 = zPos1[-1] - speedCapThrowFall*frames4
-
             xPos = np.concatenate((xPos1,xPos2))
             zPos = np.concatenate((zPos1,zPos2))
-
-            newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
-            newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
-
-            xPos = newXPos
-            zPos = newZPos
+    newXPos = xPos*np.cos(vAngle)-zPos*np.sin(vAngle) + pos[0]
+    newZPos = zPos*np.cos(vAngle)+xPos*np.sin(vAngle) + pos[2]
+    xPos = newXPos
+    zPos = newZPos
     return np.array([xPos,zPos])
 
 def capThrowY(pos, time):
@@ -701,11 +479,14 @@ def jumpXZ(pos, v0, stickAngle, time):
     horizontal = np.linalg.norm(np.array([v0[0],v0[2]])) # magnitude of said vector
     if horizontal == 0.9999999999999999:
         horizontal = 1  #float error correction, because otherwise arccos will break :)
-    xStick = np.cos(stickAngle)
-    yStick = np.sin(stickAngle)
+    xStick = 32767*np.cos(stickAngle)
+    yStick = 32767*np.sin(stickAngle)
     stickDir = np.array([xStick,yStick]) # get x and y coordinates of stick
     if horizontal != 0:
-        vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the jump
+        if v0[2] >= 0:
+            vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) # angle you are moving before the jump
+        else:
+            vAngle = np.arccos(v0[0]/(np.sqrt(v0[0]**2+v0[2]**2))) + np.pi
         vectorAngle = np.arccos(round(np.dot(np.array([v0[0],v0[2]]),stickDir)/(horizontal*np.linalg.norm(stickDir)),5)) # calculates the angle between the stick direction and velocity
     elif horizontal == 0:
         vectorAngle = 0
@@ -870,7 +651,7 @@ def jumpXZ(pos, v0, stickAngle, time):
             frames2 = np.linspace(1,time-jumpVectorTime,time-jumpVectorTime)
             xPos = horizontal*frames + const.JUMP_ACCEL_FORWARDS*frames*(frames+1)/2*np.cos(vectorAngle)
             zPos1 = -const.JUMP_ACCEL_SIDE*frames1*(frames1+1)/2*np.sin(vectorAngle)
-            zPos2 = zPos1[-1] + horizontal*frames2
+            zPos2 = zPos1[-1] - horizontal*frames2
 
             zPos = np.concatenate((zPos1,zPos2))
 
@@ -1409,49 +1190,13 @@ def graphJumpTriple(pos, v0, stickAngle, buttonHeld, time):
     ax.plot3D(x,z,y)
     return np.array([x[-1],y[-1],z[-1]])
 
-pos = np.array([0,5150,0])
-v0 = np.array([24,0,0])
-stickAngle = 0
+pos = np.array([0,0,0])
 buttonHeld = 10
-time = 36
+time = 67
+v0 = np.array([24,0,0])
+stickAngle = np.pi/2
 graphJumpTriple(pos, v0, stickAngle, buttonHeld, time)
-
-xCapThrow = capThrowXZ(graphJumpTriple(pos, v0, stickAngle, buttonHeld, time),v0,stickAngle,stickAngle,28)[0]
-zCapThrow = capThrowXZ(graphJumpTriple(pos, v0, stickAngle, buttonHeld, time),v0,stickAngle,stickAngle,28)[1]
-yCapThrow = capThrowY(graphJumpTriple(pos, v0, stickAngle, buttonHeld, time),28)
-
-capThrowPos = np.array([xCapThrow[-1],yCapThrow[-1],zCapThrow[-1]])
-
-xDive = diveXZ(capThrowPos,0,21)[0]
-zDive = diveXZ(capThrowPos,0,21)[1]
-yDive = diveY(capThrowPos,21)
-
-divePos = np.array([xDive[-1],yDive[-1],zDive[-1]])
-
-xCapJump = capJumpXZ(divePos,np.array([1,0,0]),stickAngle,21)[0]
-zCapJump = capJumpXZ(divePos,np.array([1,0,0]),stickAngle,21)[1]
-yCapJump = capJumpY(divePos,21)
-
-capJumpPos = np.array([xCapJump[-1],yCapJump[-1],zCapJump[-1]])
-
-xCapThrow2 = capThrowXZ(capJumpPos,v0,stickAngle,stickAngle,20)[0]
-zCapThrow2 = capThrowXZ(capJumpPos,v0,stickAngle,stickAngle,20)[1]
-yCapThrow2 = capThrowY(capJumpPos,20)
-
-capThrowPos2 = np.array([xCapThrow2[-1],yCapThrow2[-1],zCapThrow2[-1]])
-
-xDive2 = diveXZ(capThrowPos2,0,13)[0]
-zDive2 = diveXZ(capThrowPos2,0,13)[1]
-yDive2 = diveY(capThrowPos2,13)
-
-divePos2 = np.array([xDive2[-1],yDive2[-1],zDive2[-1]])
-
-print(divePos2)
-ax.plot3D(xCapThrow,zCapThrow,yCapThrow)
-ax.plot3D(xDive,zDive,yDive)
-ax.plot3D(xCapJump,zCapJump,yCapJump)
-ax.plot3D(xCapThrow2,zCapThrow2,yCapThrow2)
-ax.plot3D(xDive2,zDive2,yDive2)
-ax.set_zlim(5150,7150)
+ax.set_xlim(-750,2000)
+ax.set_ylim(-750,2000)
 plt.show()
 
